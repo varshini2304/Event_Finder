@@ -1,6 +1,10 @@
 # Event Finder
 
+[![Build Android APK](https://github.com/varshini2304/Event_Finder/actions/workflows/build-apk.yml/badge.svg?branch=main)](https://github.com/varshini2304/Event_Finder/actions/workflows/build-apk.yml)
+
 A Flutter mobile app that helps users discover and explore nearby events such as concerts, meetups, sports, and lifestyle gatherings. Built as the submission for the Event Finder internship assignment.
+
+> **Download the APK:** [latest GitHub Actions run](https://github.com/varshini2304/Event_Finder/actions/workflows/build-apk.yml) → open the most recent green run → scroll to **Artifacts** → download `event-finder-apk`.
 
 ---
 
@@ -94,28 +98,31 @@ The full sample payload used by the bundled fallback lives in `_seedJson` inside
 
 ## 5. Getting started
 
+### Run from source
 ```bash
 flutter pub get
 flutter run
 ```
 
-> **Windows desktop only:** building plugins on Windows needs Developer Mode. Run `start ms-settings:developers` once and toggle it on. Android, iOS, and web are unaffected.
+> **Windows note:** building plugins on Windows requires Developer Mode (`start ms-settings:developers`) for symlink support.
 
-To run the analyzer / tests:
+To run static analysis:
 ```bash
 flutter analyze
-flutter test
 ```
 
-### Download a pre-built APK
-A GitHub Actions workflow ([.github/workflows/build-apk.yml](.github/workflows/build-apk.yml)) builds a release APK on every push to `main`/`master` (and on manual trigger).
+### Install the pre-built APK
+A GitHub Actions workflow ([.github/workflows/build-apk.yml](.github/workflows/build-apk.yml)) builds a release APK on every push to `main` and on manual trigger.
 
-1. Go to the repo's **Actions** tab.
-2. Open the latest successful **Build Android APK** run.
-3. Scroll to the **Artifacts** section at the bottom and download `event-finder-apk`.
-4. Unzip — `event-finder-<sha>.apk` is inside.
+1. Open the [Build Android APK runs](https://github.com/varshini2304/Event_Finder/actions/workflows/build-apk.yml).
+2. Click the latest green run.
+3. Scroll to **Artifacts** at the bottom of the run summary and download `event-finder-apk`.
+4. Unzip — `event-finder-<sha>.apk` is inside. Sideload it with:
+   ```bash
+   adb install -r event-finder-<sha>.apk
+   ```
 
-To trigger a build manually without pushing, use **Actions → Build Android APK → Run workflow**.
+To trigger a fresh build without pushing: **Actions → Build Android APK → Run workflow**.
 
 ---
 
@@ -132,4 +139,4 @@ No state-management packages — `EventProvider` uses Flutter's built-in `Change
 
 ## 7. Submission summary (≤150 words)
 
-Implemented the **Home** and **Event Detail** screens of the Event Finder app in Flutter. The home screen fetches events from a mock API via `http`, renders them as Stack-based cards with a gradient overlay, category chip, animated heart, and Hero-tagged image, and supports pull-to-refresh. A live search bar filters by title, category, or location through a centralized `EventProvider` (`ChangeNotifier` exposed via `InheritedNotifier`), which also persists favorites with `shared_preferences`. Tapping a card transitions to a detail screen with a Hero banner, gradient CTA button, and a synced favorite toggle. Loading, error, empty, and no-results states are all handled. Architecture follows clean separation across `models`, `services`, `providers`, `screens`, and `widgets`. The biggest challenge was keeping favorite state consistent across both screens after a refresh — solved by keying on event IDs and merging the stored set onto every new fetch.
+Implemented the **Home** and **Event Detail** screens of the Event Finder app in Flutter. The home screen fetches events from a mock API via `http`, renders them as Stack-based cards with a gradient overlay, category chip, animated heart, and Hero-tagged image, and supports pull-to-refresh. A live search bar filters by title, category, or location through a centralized `EventProvider` (`ChangeNotifier` exposed via `InheritedNotifier`), which also persists favorites with `shared_preferences`. Tapping a card transitions to a detail screen with a Hero banner, gradient CTA button, and a synced favorite toggle. Loading, error, empty, and no-results states are all handled. Architecture follows clean separation across `models`, `services`, `providers`, `screens`, and `widgets`. Local builds were blocked by Windows Smart App Control restricting Flutter's shader compiler, so I wired up a GitHub Actions workflow to produce the release APK on Linux runners — a useful side-effect is reproducible CI builds for every commit.
