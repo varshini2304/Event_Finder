@@ -107,6 +107,16 @@ flutter analyze
 flutter test
 ```
 
+### Download a pre-built APK
+A GitHub Actions workflow ([.github/workflows/build-apk.yml](.github/workflows/build-apk.yml)) builds a release APK on every push to `main`/`master` (and on manual trigger).
+
+1. Go to the repo's **Actions** tab.
+2. Open the latest successful **Build Android APK** run.
+3. Scroll to the **Artifacts** section at the bottom and download `event-finder-apk`.
+4. Unzip — `event-finder-<sha>.apk` is inside.
+
+To trigger a build manually without pushing, use **Actions → Build Android APK → Run workflow**.
+
 ---
 
 ## 6. Dependencies
