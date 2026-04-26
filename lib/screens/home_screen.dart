@@ -1,61 +1,25 @@
 import 'package:flutter/material.dart';
 
+import '../main.dart';
 import '../models/event_model.dart';
-import '../services/api_service.dart';
-import '../widgets/custom_search_bar.dart';
+import '../providers/event_provider.dart';
 import '../widgets/event_card.dart';
+import '../widgets/search_bar.dart';
 import 'event_detail_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  final ApiService _apiService = ApiService();
-
-  late Future<List<Event>> _eventsFuture;
-  List<Event> _events = <Event>[];
-
-  @override
-  void initState() {
-    super.initState();
-    _eventsFuture = _loadEvents();
-  }
-
-  Future<List<Event>> _loadEvents() async {
-    final fetched = await _apiService.fetchEvents();
-    _events = fetched;
-    return _events;
-  }
-
-  Future<void> _refreshEvents() async {
-    setState(() {
-      _eventsFuture = _loadEvents();
-    });
-    await _eventsFuture;
-  }
-
-  void _toggleFavorite(Event event) {
-    setState(() {
-      _events = _events
-          .map(
-            (item) => item.id == event.id
-                ? item.copyWith(isFavorite: !item.isFavorite)
-                : item,
-          )
-          .toList();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final provider = EventProviderScope.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Event Finder'),
-        elevation: 0,
+        title: const Text(
+          'Discover Events',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,79 +36,105 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Expanded(
-            child: FutureBuilder<List<Event>>(
-              future: _eventsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting &&
-                    _events.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (snapshot.hasError && _events.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        'Something went wrong:\n${snapshot.error}',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  );
-                }
-
-                final events = _events;
-
-                if (events.isEmpty) {
-                  return RefreshIndicator(
-                    onRefresh: _refreshEvents,
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: const [
-                        SizedBox(height: 180),
-                        Center(child: Text('No events found right now.')),
-                      ],
-                    ),
-                  );
-                }
-
-                return RefreshIndicator(
-                  onRefresh: _refreshEvents,
-                  child: ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount: events.length,
-                    itemBuilder: (context, index) {
-                      final event = events[index];
-                      return EventCard(
-                        event: event,
-                        onFavoriteTap: () => _toggleFavorite(event),
-                        onTap: () {
-                          Navigator.of(context).push(
-                            PageRouteBuilder<void>(
-                              transitionDuration:
-                                  const Duration(milliseconds: 420),
-                              reverseTransitionDuration:
-                                  const Duration(milliseconds: 300),
-                              pageBuilder: (_, animation, __) {
-                                final curved = CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.easeOutCubic,
-                                );
-                                return FadeTransition(
-                                  opacity: curved,
-                                  child: EventDetailScreen(event: event),
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                );
-              },
+            child: RefreshIndicator(
+              onRefresh: provider.refresh,
+              child: _EventListBody(provider: provider),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _EventListBody extends StatelessWidget {
+  const _EventListBody({required this.provider});
+
+  final EventProvider provider;
+
+  @override
+  Widget build(BuildContext context) {
+    if (provider.isLoading && provider.events.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (provider.hasError && provider.events.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          const SizedBox(height: 140),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.cloud_off_outlined,
+                  size: 48,
+                  color: Color(0xFF8A8A99),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Could not load events',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${provider.error}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Color(0xFF8A8A99)),
+                ),
+                const SizedBox(height: 16),
+                FilledButton.tonal(
+                  onPressed: provider.refresh,
+                  child: const Text('Try again'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (provider.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: const [
+          SizedBox(height: 180),
+          Center(child: Text('No events found right now.')),
+        ],
+      );
+    }
+
+    final events = provider.events;
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 16),
+      itemCount: events.length,
+      itemBuilder: (context, index) {
+        final event = events[index];
+        return EventCard(
+          event: event,
+          onFavoriteTap: () => provider.toggleFavorite(event.id),
+          onTap: () => _openDetail(context, event),
+        );
+      },
+    );
+  }
+
+  void _openDetail(BuildContext context, Event event) {
+    Navigator.of(context).push(
+      PageRouteBuilder<void>(
+        transitionDuration: const Duration(milliseconds: 420),
+        reverseTransitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (_, animation, __) {
+          final curved =
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+          return FadeTransition(
+            opacity: curved,
+            child: EventDetailScreen(eventId: event.id),
+          );
+        },
       ),
     );
   }

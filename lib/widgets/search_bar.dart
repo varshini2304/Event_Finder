@@ -20,8 +20,9 @@ class CustomSearchBar extends StatelessWidget {
       child: TextField(
         readOnly: true,
         decoration: InputDecoration(
-          hintText: 'Search events...',
-          prefixIcon: const Icon(Icons.search),
+          hintText: 'Search events, places, vibes...',
+          hintStyle: const TextStyle(color: Color(0xFF8A8A99)),
+          prefixIcon: const Icon(Icons.search, color: Color(0xFF6B6B7B)),
           filled: true,
           fillColor: const Color(0xFFF0F0F3),
           border: OutlineInputBorder(

@@ -39,9 +39,9 @@ class _EventCardState extends State<EventCard> {
         curve: Curves.easeOut,
         child: Material(
           color: Colors.white,
-          elevation: 7,
+          elevation: 6,
           shadowColor: const Color(0x33000000),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: widget.onTap,
@@ -66,6 +66,18 @@ class _EventCardState extends State<EventCard> {
                           child: child,
                         );
                       },
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return Container(
+                          color: const Color(0xFFEDEDF2),
+                          alignment: Alignment.center,
+                          child: const SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: CircularProgressIndicator(strokeWidth: 2.5),
+                          ),
+                        );
+                      },
                       errorBuilder: (context, _, __) => Container(
                         color: Colors.grey.shade300,
                         alignment: Alignment.center,
@@ -77,40 +89,25 @@ class _EventCardState extends State<EventCard> {
                       ),
                     ),
                   ),
-                  Container(
-                    decoration: const BoxDecoration(
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
                           Color(0x26000000),
-                          Color(0x99000000),
+                          Color(0xCC000000),
                         ],
+                        stops: [0.4, 1.0],
                       ),
                     ),
                   ),
                   Positioned(
                     top: 12,
                     left: 12,
-                    child: Material(
-                      color: Colors.black45,
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: widget.onFavoriteTap,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Icon(
-                            event.isFavorite
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            color: event.isFavorite
-                                ? const Color(0xFFFF4D6D)
-                                : Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
+                    child: _FavoriteButton(
+                      isFavorite: event.isFavorite,
+                      onTap: widget.onFavoriteTap,
                     ),
                   ),
                   Positioned(
@@ -154,7 +151,7 @@ class _EventCardState extends State<EventCard> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '${event.date} - ${event.time}',
+                          '${event.date}  -  ${event.time}',
                           style: const TextStyle(
                             color: Color(0xFFF1F1F1),
                             fontSize: 13,
@@ -207,6 +204,48 @@ class _EventCardState extends State<EventCard> {
                   ),
                 ],
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FavoriteButton extends StatelessWidget {
+  const _FavoriteButton({required this.isFavorite, required this.onTap});
+
+  final bool isFavorite;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black45,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 240),
+            transitionBuilder: (child, animation) {
+              return ScaleTransition(
+                scale: Tween<double>(begin: 0.6, end: 1.0).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.elasticOut,
+                  ),
+                ),
+                child: FadeTransition(opacity: animation, child: child),
+              );
+            },
+            child: Icon(
+              isFavorite ? Icons.favorite : Icons.favorite_border,
+              key: ValueKey<bool>(isFavorite),
+              color: isFavorite ? const Color(0xFFFF4D6D) : Colors.white,
+              size: 20,
             ),
           ),
         ),
