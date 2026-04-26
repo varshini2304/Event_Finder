@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:event_finder_app/main.dart';
+import 'package:event_finder/main.dart';
 
 void main() {
   testWidgets('Event Finder home renders', (WidgetTester tester) async {

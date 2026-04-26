@@ -1,4 +1,4 @@
-name: event_finder_app
+name: event_finder
 description: A Flutter app to discover nearby events.
 publish_to: 'none'
 version: 1.0.0+1
