@@ -24,11 +24,16 @@ class HomeScreen extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CustomSearchBar(),
+          CustomSearchBar(
+            initialValue: provider.searchQuery,
+            onChanged: provider.setSearchQuery,
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 4, 18, 6),
             child: Text(
-              'Nearby Events',
+              provider.searchQuery.trim().isEmpty
+                  ? 'Nearby Events'
+                  : 'Results for "${provider.searchQuery.trim()}"',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF2F2A42),
@@ -106,7 +111,39 @@ class _EventListBody extends StatelessWidget {
       );
     }
 
-    final events = provider.events;
+    if (provider.hasNoResults) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          const SizedBox(height: 140),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.search_off,
+                  size: 48,
+                  color: Color(0xFF8A8A99),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'No events match "${provider.searchQuery.trim()}"',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Try a different search term.',
+                  style: TextStyle(color: Color(0xFF8A8A99)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    final events = provider.filteredEvents;
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 16),
